@@ -154,9 +154,9 @@ CI:
 
 ## systemd
 
-Service file: `systemd/codex-ws-gateway.service`
+Service file: `systemd/sonic-ws-gateway.service`
 
-Example env file (`/etc/codex-ws-gateway.env`):
+Example env file (`/etc/sonic-ws-gateway.env`):
 
 ```bash
 VLLM_URL=http://localhost:8000
